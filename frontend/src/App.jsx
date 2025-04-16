@@ -15,6 +15,7 @@ function App() {
   const [timeElapsed, setTimeElapsed] = useState(0)
   const socketRef = useRef(null)
 
+  // queueban töltött idő számolása
   useEffect(() => {
     let intervalUpdate;
     if (isInQueue) {
@@ -23,6 +24,7 @@ function App() {
     return () => clearInterval(intervalUpdate)
   }, [isInQueue, timeElapsed])
 
+  // Mennyi időnként csekkolja hogy él e még a queue
   useEffect(() => {
     let intervalUpdate;
     if (isInQueue) {
@@ -38,10 +40,17 @@ function App() {
       console.log('Connected to server')
       setType("Kapcsolat létesítve.")
       setValue("Kapcsolódva vagy a backendhez.")
-      // You can send something if needed:
-      // socketRef.current.send(JSON.stringify({ client: 'hello' }))
     }
 
+    socketRef.current.onclosed = () => {
+      setIsInQueue(false)
+      setIsMatchFound(false)
+      setType("Szétkapcsolva.")
+      setValue("A kapcsolat a backenddel megszűnt.")
+    }
+
+    // kezeli az üzeneteket
+    // mivel ez csak egy concept (aka mivel lusta vagyok), ezért hiányzik validation hogy bizonyos fieldek megvannak e
     socketRef.current.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data)
@@ -82,7 +91,8 @@ function App() {
 
   const enterQueue = () => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({ type: 'queue_update', username, level: 17, power_combined: 20 }))
+      // Tesztből random lvl és power
+      socketRef.current.send(JSON.stringify({ type: 'queue_update', username, level: Math.floor(Math.random() * (40 - 10 + 1)) + 10, power_combined: Math.floor(Math.random() * (40 - 10 + 1)) + 10 }))
       setType("Belépés...")
       setValue("Várakozunk a backendre, hogy megerősítse a queue-ba lépést.")
     }

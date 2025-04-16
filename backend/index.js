@@ -29,10 +29,10 @@ wss.on('connection', (ws, req) => {
 
       console.log(inQueue);
 
-      // ez a szám szabja meg hogy hány player kell hogy a queue összehasonlítást végezzen, és indítson egy lobby-t
+      // ez a szám szabja meg hogy hány player kell hogy a queue összehasonlítást végezzen, és indítson lobbikat (kettesével)
       if (Object.keys(inQueue).length >= 4) {
         let teamset = []; // Ebbe a listába kerülnek a csapatok: [[user1, user2], [user3, user4],... [usern, usern+1]]
-        let scoreset = {}; // Ebbe a listába kerülnek a pontozások: {user1: 14, user2: 20,... usern: x}
+        let scoreset = {}; // Ebbe a listába kerülnek a pontozások: {user1: 140, user2: 200,... usern: x}
 
         for (const [username, data] of Object.entries(inQueue)) {
           data.ws.send(JSON.stringify({ type: "queue_confirming", message: "A meccs előkészítése..." }));
@@ -40,20 +40,26 @@ wss.on('connection', (ws, req) => {
           scoreset[username] = data.level * 3 + data.power_combined * 5; // Ez állapítja meg, milyen erős egy player
         }
 
+        // sorba rendezés pont alapján
+        scoreset = Object.entries(users)
+          .sort((a, b) => a[1] - b[1])
+          .reduce((acc, [key, value]) => {
+            acc[key] = value;
+            return acc;
+          }, {});
+
         teamset = Object.entries(scoreset).reduce((acc, [key, value], index, array) => {
           // kettesével elválasztja a playereket
           // utolsó páratlan player kimarad a meccsből és keres tovább
           if (index % 2 === 0 && index + 1 < array.length) {
             acc.push([array[index][0], array[index + 1][0]]);
-            inQueue[array[index + 1][0]].ws.send(JSON.stringify({type: "match_found", message: `Ellenfeled: ${array[index][0]}`}));
-            inQueue[array[index][0]].ws.send(JSON.stringify({type: "match_found", message: `Ellenfeled: ${array[index + 1][0]}`}));
+            inQueue[array[index + 1][0]].ws.send(JSON.stringify({ type: "match_found", message: `Ellenfeled: ${array[index][0]}` }));
+            inQueue[array[index][0]].ws.send(JSON.stringify({ type: "match_found", message: `Ellenfeled: ${array[index + 1][0]}` }));
             delete inQueue[array[index][0]];
             delete inQueue[array[index + 1][0]];
           }
           return acc;
         }, []);
-
-
 
         // miután megvan mind a 2 játékos, csinálhatunk egy temp. lobby-t ahova mindkettőjüket bedobja, vagy valami ilyesmi.
 
