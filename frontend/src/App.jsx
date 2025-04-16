@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 
 function App() {
-  const [username, setUsername] = useState("defaultuser0")
+  // Tesztből kell
+  const generateRandomUsername = () => {
+    const randomNumber = Math.floor(Math.random() * 10000); // You can change the range if needed
+    return `user${randomNumber}`;
+  };
+  
+  const [username, setUsername] = useState(generateRandomUsername());
   const [type, setType] = useState('Szétkapcsolva.')
   const [value, setValue] = useState('Nem vagy kapcsolódva a backendhez.')
   const [isInQueue, setIsInQueue] = useState(false)
@@ -45,6 +51,7 @@ function App() {
         } else if (data.type == "queue_left") {
           setType("Elhagytad a queue-t.")
           setValue("Jelenleg nem várakozol.")
+          setTimeElapsed(0)
           setIsInQueue(false);
         } else if (data.type == "queue_alive") {
           // A szöveg frissítése
@@ -53,7 +60,8 @@ function App() {
         } else if (data.type == "queue_dead") {
           setType("Nem vagy a queueban.")
           setValue("Jelenleg nem várakozol.")
-          setIsInQueue(false);
+          setTimeElapsed(0)
+          setIsInQueue(false)
         }
       } catch (err) {
         console.error('Invalid JSON:', event.data)

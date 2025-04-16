@@ -17,23 +17,48 @@ wss.on('connection', (ws, req) => {
     if (dec.type == "queue_update") {
       // objectben tároljuk hogy ki van bent a queueban
       // de először megnézzük hogy már bent van-e player a queueban
+      // statokat is fogadunk, az majd kell a queue logikához.
       if (dec.username in inQueue) {
         delete inQueue[dec.username]; // Felhasználó el akarja hagyni a queue-t, ezért kivesszük a listából
         ws.send(JSON.stringify({ type: "queue_left", message: "Kiléptél a queueból." }));
       } else {
         // Felhasználó még nincs bent a queueban
-        inQueue[dec.username] = { ws, level: dec.level, power_combined: dec.power_combined};
+        inQueue[dec.username] = { ws, level: dec.level, power_combined: dec.power_combined };
         ws.send(JSON.stringify({ type: "queue_accept", message: "Sikeres belépés. Várakozás játékosokra...", waiting: Object.keys(inQueue).length }));
       }
 
       console.log(inQueue);
+
+      // ez a szám szabja meg hogy hány player kell hogy a queue összehasonlítást végezzen, és indítson egy lobby-t
+      if (Object.keys(inQueue).length >= 4) {
+        let teamset = []; // Ebbe a listába kerülnek a csapatok: [[user1, user2], [user3, user4],... [usern, usern+1]]
+        let scoreset = {}; // Ebbe a listába kerülnek a pontozások: {user1: 14, user2: 20,... usern: x}
+
+        for (const [username, data] of Object.entries(inQueue)) {
+          data.ws.send(JSON.stringify({ type: "queue_confirming", message: "A meccs előkészítése..." }))
+          console.log(`${username}: Level: ${data.level}, Power: ${data.power_combined}`);
+          scoreset[username] = data.level * 3 + data.power_combined * 5; // Ez állapítja meg, milyen erős egy player
+        }
+
+        teamset = Object.entries(scoreset).reduce((acc, [key, value], index, array) => {
+          if (index % 2 === 0 && index + 1 < array.length) { // utolsó páratlan player kimarad a meccsből és keres tovább
+            acc.push([array[index][0], array[index + 1][0]]);
+            delete inQueue[array[index][0]];
+            delete inQueue[array[index + 1][0]];
+          }
+          return acc;
+        }, []);
+
+        console.log(inQueue);
+        console.log(teamset);
+        console.log(scoreset);
+
+        // miután megvan mind a 2 játékos, csinálhatunk egy temp. lobby-t ahova mindkettőjüket bedobja, vagy valami ilyesmi.
+      }
     } else if (dec.type == "queue_check") {
       if (dec.username in inQueue) {
         ws.send(JSON.stringify({ type: "queue_alive", waiting: Object.keys(inQueue).length }));
       } else {
-        console.log("Nincs queueban!");
-        console.log(dec.username);
-        console.log(inQueue);
         ws.send(JSON.stringify({ type: "queue_dead" }));
       }
     }
