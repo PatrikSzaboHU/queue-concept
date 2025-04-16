@@ -37,3 +37,8 @@ bun i # vagy másik tetszőleges runtime
 ```sh
 bun . # szintúgy, kb bármelyik runtime
 ```
+
+## Egyebek
+- Tudom, egy switch-case jobb lett volna a sok if helyére.
+- Tudom, hogy nincsenek a JSON fieldek checkolva.
+- Tudom hogy nagy valszeg a player összerakást egy gyorsabb és/vagy memory efficientebb módon meg lehetett volna csinálni.
