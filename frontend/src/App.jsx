@@ -6,11 +6,12 @@ function App() {
     const randomNumber = Math.floor(Math.random() * 10000); // You can change the range if needed
     return `user${randomNumber}`;
   };
-  
+
   const [username, setUsername] = useState(generateRandomUsername());
   const [type, setType] = useState('Szétkapcsolva.')
   const [value, setValue] = useState('Nem vagy kapcsolódva a backendhez.')
   const [isInQueue, setIsInQueue] = useState(false)
+  const [isMatchFound, setIsMatchFound] = useState(false)
   const [timeElapsed, setTimeElapsed] = useState(0)
   const socketRef = useRef(null)
 
@@ -62,9 +63,17 @@ function App() {
           setValue("Jelenleg nem várakozol.")
           setTimeElapsed(0)
           setIsInQueue(false)
+        } else if (data.type == "match_found") {
+          setIsInQueue(false)
+          setIsMatchFound(true)
+          setType("Ellenség találva!")
+          setValue(data.message)
+          // Itt lehetne a kódot frissíteni, hogy csatlakozzon és elindítson
+          // pl. egy dinamikusan generált temp. lobbyba ahol lefolyik majd a meccs
         }
       } catch (err) {
         console.error('Invalid JSON:', event.data)
+        console.error(err)
       }
     }
 
@@ -84,7 +93,7 @@ function App() {
   }
 
   return (
-    <div className='queue-info'>
+    <div className={`queue-info ${isMatchFound ? 'match-found' : ''}`}>
       <h1>{type}</h1>
       <p>{value}</p>
       <button onClick={enterQueue}>

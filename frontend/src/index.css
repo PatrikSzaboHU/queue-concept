@@ -21,6 +21,14 @@ body {
   margin: 0 auto;
 }
 
+.match-found {
+  background-color: #505050;
+}
+
+.match-found h1 {
+  color: #00ff00;
+}
+
 button {
   background-color: #303030;
   color: #ffffff;

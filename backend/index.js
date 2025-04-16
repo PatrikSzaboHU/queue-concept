@@ -35,25 +35,31 @@ wss.on('connection', (ws, req) => {
         let scoreset = {}; // Ebbe a listába kerülnek a pontozások: {user1: 14, user2: 20,... usern: x}
 
         for (const [username, data] of Object.entries(inQueue)) {
-          data.ws.send(JSON.stringify({ type: "queue_confirming", message: "A meccs előkészítése..." }))
+          data.ws.send(JSON.stringify({ type: "queue_confirming", message: "A meccs előkészítése..." }));
           console.log(`${username}: Level: ${data.level}, Power: ${data.power_combined}`);
           scoreset[username] = data.level * 3 + data.power_combined * 5; // Ez állapítja meg, milyen erős egy player
         }
 
         teamset = Object.entries(scoreset).reduce((acc, [key, value], index, array) => {
-          if (index % 2 === 0 && index + 1 < array.length) { // utolsó páratlan player kimarad a meccsből és keres tovább
+          // kettesével elválasztja a playereket
+          // utolsó páratlan player kimarad a meccsből és keres tovább
+          if (index % 2 === 0 && index + 1 < array.length) {
             acc.push([array[index][0], array[index + 1][0]]);
+            inQueue[array[index + 1][0]].ws.send(JSON.stringify({type: "match_found", message: `Ellenfeled: ${array[index][0]}`}));
+            inQueue[array[index][0]].ws.send(JSON.stringify({type: "match_found", message: `Ellenfeled: ${array[index + 1][0]}`}));
             delete inQueue[array[index][0]];
             delete inQueue[array[index + 1][0]];
           }
           return acc;
         }, []);
 
+
+
+        // miután megvan mind a 2 játékos, csinálhatunk egy temp. lobby-t ahova mindkettőjüket bedobja, vagy valami ilyesmi.
+
         console.log(inQueue);
         console.log(teamset);
         console.log(scoreset);
-
-        // miután megvan mind a 2 játékos, csinálhatunk egy temp. lobby-t ahova mindkettőjüket bedobja, vagy valami ilyesmi.
       }
     } else if (dec.type == "queue_check") {
       if (dec.username in inQueue) {
