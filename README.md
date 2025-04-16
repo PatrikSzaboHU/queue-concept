@@ -40,5 +40,6 @@ bun . # szintúgy, kb bármelyik runtime
 
 ## Egyebek
 - Tudom, egy switch-case jobb lett volna a sok if helyére.
-- Tudom, hogy nincsenek a JSON fieldek checkolva.
+- Nincsenek a JSON fieldek checkolva.
 - Tudom hogy nagy valszeg a player összerakást egy gyorsabb és/vagy memory efficientebb módon meg lehetett volna csinálni.
+- Igen, a frontend adja át a player szintet a szervernek, de szerintem ezt is könnyen meg lehet oldani, és random számokat generál tesztből
